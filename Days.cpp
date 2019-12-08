@@ -700,7 +700,7 @@ int day8(char* filename) {
         } else {
             cout << " ";
         }
-        if ((i + 1) % 25 == 0) {
+        if ((i + 1) % width == 0) {
             cout << endl;
         }
     }

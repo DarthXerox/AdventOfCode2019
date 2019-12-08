@@ -1,3 +1,7 @@
+# compiled files
+*.o
+advent
+
 # compile database needed to run makefile in clion
 compile_commands.json
 
