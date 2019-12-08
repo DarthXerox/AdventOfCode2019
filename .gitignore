@@ -1,6 +1,7 @@
 # compile database needed to run makefile in clion
 compile_commands.json
 
-# .idea file
+# CLion files
 .idea
+.vscode
 
