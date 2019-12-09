@@ -708,7 +708,7 @@ int day8(char* filename) {
     return 0;
 }
 
-
+// Im too lazy to refactor the intcode made before and functions calling it
 long get_address(vector<long>& vec, int mode, long pos, long relative_base) {
     switch (mode) {
         case 0:
