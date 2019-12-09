@@ -38,6 +38,9 @@ int main(int argc, char** argv) {
         case 8:
             day8(infile);
             break;
+        case 9:
+            day9(infile);
+            break;
         default:
             std::cout << "Wrong day number" << std::endl;
             return 1;

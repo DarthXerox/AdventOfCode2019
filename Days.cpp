@@ -707,3 +707,156 @@ int day8(char* filename) {
 
     return 0;
 }
+
+
+long get_address(vector<long>& vec, int mode, long pos, long relative_base) {
+    switch (mode) {
+        case 0:
+            return vec[pos];
+        case 1:
+            return pos;
+        case 2:
+            return relative_base + vec[pos];
+        default:
+            cout <<"Wrong mode: " << mode << " pos: " << pos << endl;
+            return -1;
+    }
+}
+
+long mode(vector<long>& vec, int mode, long pos, long relative_base) {
+    //cout << "Vec size: " << vec.size() << " position: " << pos << endl;
+    long address = get_address(vec, mode, pos, relative_base);
+    if (address == -1) {
+        cout <<"Wrong mode: " << mode << " pos: " << pos << endl;
+        return -1;
+    }
+
+    return vec[address];
+}
+
+int intcode_computer(vector<long>& nums, stringstream& ss, long& instruction_pos, long& relative_base) {
+    string str;
+    //int instruction_pos = 0;
+    long num = nums[instruction_pos];
+    while (num != 99) {
+        str = to_string(num);
+        string save_str = str;
+        reverse(str.begin(), str.end());
+
+        int instruction = stoi(str.substr(0, 1));
+
+        vector<int> param_modes;
+        if (str.size() > 2) {
+            str = str.substr(2);
+            for (int i = 0; i < 4; i++) {
+                if (str.size() > i) {
+                    param_modes.push_back(stoi(str.substr(i, 1)));
+                } else {
+                    param_modes.push_back(0);
+                }
+            }
+        } else {
+            param_modes = {0, 0, 0, 0};
+        }
+
+
+        long save_ins_pos = instruction_pos;
+        int increment = 4;
+        switch (instruction){
+            case 1:
+                nums[get_address(nums, param_modes[2], instruction_pos + 3, relative_base)] =
+                        mode(nums, param_modes[0], instruction_pos + 1, relative_base) +
+                        mode(nums, param_modes[1], instruction_pos + 2, relative_base);
+                break;
+            case 2:
+                nums[get_address(nums, param_modes[2], instruction_pos + 3, relative_base)] =
+                        mode(nums, param_modes[0], instruction_pos + 1, relative_base) *
+                        mode(nums, param_modes[1], instruction_pos + 2, relative_base);
+                break;
+            case 3:
+                ss >> nums[get_address(nums, param_modes[0], instruction_pos + 1, relative_base)];
+                increment = 2;
+                break;
+            case 4:
+                ss << mode(nums, param_modes[0], instruction_pos +1, relative_base) << " ";
+                increment = 2;
+                break;
+                //return 1;
+                //cout << mode(nums, param_modes[0], instruction_pos +1) << endl;
+            case 5:
+                if (mode(nums, param_modes[0], instruction_pos + 1, relative_base) != 0) {
+                    instruction_pos = mode(nums, param_modes[1], instruction_pos + 2, relative_base);
+                }
+                increment = 3;
+                break;
+            case 6:
+                if (mode(nums, param_modes[0], instruction_pos + 1, relative_base) == 0) {
+                    instruction_pos = mode(nums, param_modes[1], instruction_pos + 2, relative_base);
+                }
+                increment = 3;
+                break;
+            case 7:
+                if (mode(nums, param_modes[0], instruction_pos + 1, relative_base) <
+                    mode(nums, param_modes[1], instruction_pos + 2, relative_base)) {
+                    nums[get_address(nums, param_modes[2], instruction_pos + 3, relative_base)] = 1;
+                } else {
+                    nums[get_address(nums, param_modes[2], instruction_pos + 3, relative_base)] = 0;
+                }
+                break;
+            case 8:
+                if (mode(nums, param_modes[0], instruction_pos + 1, relative_base) ==
+                    mode(nums, param_modes[1], instruction_pos + 2, relative_base)) {
+                    nums[get_address(nums, param_modes[2], instruction_pos + 3, relative_base)] = 1;
+                } else {
+                    nums[get_address(nums, param_modes[2], instruction_pos + 3, relative_base)] = 0;
+                }
+                break;
+            case 9:
+                relative_base += mode(nums, param_modes[0], instruction_pos + 1, relative_base);
+                increment = 2;
+                break;
+            default:
+                cout << "Wrong instruction num, exactly: |"  << instruction << "|" << endl;
+                return 0;
+        }
+
+        if (instruction_pos != save_ins_pos) {
+            increment = 0;
+        }
+
+        instruction_pos += increment;
+        num = nums[instruction_pos];
+    }
+    return 0;
+}
+
+struct IntCodeComputer {
+    long relative_base = 0;
+    long instruction_pos = 0;
+
+    IntCodeComputer(std::vector<long> nums, stringstream& stream) {
+        intcode_computer(nums, stream, instruction_pos, relative_base);
+    }
+};
+
+int day9(char* filename) {
+    stringstream ss = get_stringstream(filename, ',');
+
+    long num;
+    std::vector<long> nums;
+    while(ss >> num) {
+        nums.push_back(num);
+    }
+    stringstream new_stream;
+    new_stream << "1" << " ";
+    IntCodeComputer comp(nums, new_stream);
+
+    cout << new_stream.str() << endl;
+
+    stringstream new_stream2;
+    new_stream2 << "2" << " ";
+    IntCodeComputer comp2(nums, new_stream2);
+
+    cout << new_stream2.str() << endl;
+    return 0;
+}
