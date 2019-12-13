@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <set>
 
+#include <cmath>
+
 
 //#include "Day1.hpp"
 
@@ -44,6 +46,33 @@ struct Point{
         return x == p.x && y == p.y;
     }
 };
+
+struct SpacePoint : public Point {
+    bool in_sight = true;
+    bool is_asteroid = false;
+
+    SpacePoint(int x, int y, bool is_asteroid) : Point(x, y), is_asteroid(is_asteroid) {}
+
+    bool operator== (const SpacePoint& p) {
+        return x == p.x && y == p.y;
+    }
+
+    friend ostream& operator<< (std::ostream &strm, SpacePoint& p) {
+        return strm << p.x << ", " << p.y;
+    }
+
+    bool operator< (SpacePoint& p) {
+        if (x == p.x) {
+            if (y < p.y)
+                return true;
+        } else if (x < p.x) {
+            return true;
+        }
+        return false;
+    }
+};
+
+
 
 struct TreeNode {
     string name;
@@ -858,5 +887,95 @@ int day9(char* filename) {
     IntCodeComputer comp2(nums, new_stream2);
 
     cout << new_stream2.str() << endl;
+    return 0;
+}
+
+// finds a base vector (starting in 0,0) when in this coor system is y reversed (multiplied by -1)
+Point get_vector_inverse_y(int xb, int yb, int xe, int ye) {
+    Point vec(xe - xb, -1 * (ye - yb));
+    return vec;
+}
+
+int day10(char* filename) {
+    std::ifstream infile(filename);
+    if (!infile.is_open() ) {
+        std::cout<<"Can't open the file"<<std::endl;
+    }
+
+    // assembles essetial variables
+    vector<string> asteroids;
+    string line;
+    getline(infile, line);
+    while(!line.empty()) {
+        asteroids.push_back(line);
+        line.clear();
+        getline(infile, line);
+    }
+
+    int max_in_sight = 0;
+    int station_x = -1, station_y = -1;
+    set<double> angles_max;
+
+    for (int y = 0; y < asteroids.size(); y++) {
+        for (int x = 0; x < asteroids[y].size(); x++) {
+            if (asteroids[y][x] == '#') {
+                set<double> angles; // for each other asteroid an angle is calculated, for each angle only one asteroid can be seen
+                for (int j = 0; j < asteroids.size(); j++) {
+                    for (int i = 0; i < asteroids[j].size(); i++) {
+                        if (asteroids[j][i] == '#' && (j != y || i != x)) {
+                            Point vec = get_vector_inverse_y(x, y, i, j);
+                            angles.insert(atan2(vec.y, vec.x));
+                        }
+                    }
+                }
+                int angles_len = angles.size(); // minus itself
+                if (angles_len > max_in_sight) {
+                    max_in_sight = angles_len;
+                    station_x = x;
+                    station_y = y;
+                    angles_max = angles;
+                }
+            }
+        }
+    }
+    cout << "Max amount of asteroids in sight is: " << max_in_sight << " Coors: " << station_x <<" " << station_y << endl;
+
+
+    int counter = 0;
+    int start_index = -1; //=  distance(angles_max.begin(), angles_max.find(tan(90)));
+    for (auto el : angles_max) {
+        double angle = el * 180 / 3.14159265;
+        counter++;
+        if (angle <= 90.0001 && angle >= 89.9999) {
+            start_index = counter;
+            cout << "Num is :" << el;
+        }
+    }
+    int ans_index = angles_max.size() + (start_index - 200); // as 200 is less than the amount of all asteroids in sight
+
+    vector<double> vec;
+    copy(angles_max.begin(), angles_max.end(), back_inserter(vec));
+    double ans_angle = vec[ans_index];
+
+
+    int min_distance = asteroids.size() * asteroids[0].size();
+    int ans_x = -1, ans_y = -1;
+    for (int y = 0; y < asteroids.size(); y++) {
+        for (int x = 0; x < asteroids[y].size(); x++) {
+            if (asteroids[y][x] == '#') {
+                Point new_vec = get_vector_inverse_y(station_x, station_y, x, y);
+                if (atan2(new_vec.y, new_vec.x) <= ans_angle + 0.001 && atan2(new_vec.y, new_vec.x) >= ans_angle - 0.001) {
+                    cout << "Coors: " << x << " " << y << endl;
+                    if (new_vec.distance() < min_distance) {
+                        min_distance = new_vec.distance();
+                        ans_x = x;
+                        ans_y = y;
+                    }
+                }
+            }
+        }
+    }
+    cout <<  "Ans is: " << 100 * ans_x + ans_y << " Coors: " << ans_x << " " << ans_y << endl;
+
     return 0;
 }
